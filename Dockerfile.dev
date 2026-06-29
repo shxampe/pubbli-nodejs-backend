@@ -1,0 +1,21 @@
+# 1️⃣ Base Image (Use official Node.js image)
+FROM node:18-alpine
+
+# 2️⃣ Set working directory inside container
+WORKDIR /app
+
+# 3️⃣ Copy package.json and package-lock.json first (for caching dependencies
+COPY package*.json ./
+
+# 4️⃣ Install dependencies
+RUN npm install --only=production
+RUN npm i nodemon
+
+# 5️⃣ Copy the rest of the application
+COPY . .
+
+# 6️⃣ Expose port (same as your app listens on)
+EXPOSE 3001
+
+# 7️⃣ Start the application
+CMD ["npm", "run", "dev"]

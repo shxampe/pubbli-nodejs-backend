@@ -1,0 +1,39 @@
+name: development Deployment
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  build:
+    runs-on: [self-hosted, production-runs]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: docker build -t pubbli_dev-image -f Dockerfile.dev .
+
+      - name: Stop & Remove Existing Container (if any)
+        run: |
+          CONTAINER_ID=$(docker ps -aq --filter "name=pubbli_development-container")
+          if [ ! -z "$CONTAINER_ID" ]; then
+            docker stop pubbli_development-container
+            docker rm pubbli_development-container
+          fi
+
+      - name: Run Docker Container
+        run: docker run -d --name pubbli_development-container -p 3001:3001 pubbli_dev-image
+
+      - name: Prune Unused Docker Resources
+        run: docker system prune -af
+
+  deployment:
+    runs-on: [self-hosted, production-runs]
+    needs: build
+    steps:
+      - name: Restart Nginx
+        run: |
+          sudo nginx -t
+          sudo systemctl restart nginx
